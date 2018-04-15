@@ -50,6 +50,7 @@ int changeToTwo(int);
 int changeToFour(int);
 int changeToOcta(int);
 
+
 void makeString(int* , int , char );
 void writeString(int *, unsigned char* );
 void countPush(int *shm_addr, int pushcount);
@@ -139,7 +140,6 @@ int input_process(int shm_id)
     shm_addr[0] = 1;    // mode
     memset(shm_addr, 0, MEM_SIZE);
 
-
     printf("input process %d started\n", getpid());
 
     if( (fd = open (device, O_RDONLY | O_NONBLOCK)) == -1 ) {
@@ -217,13 +217,13 @@ int output_process(int shm_id)
 
     int fd, rd, mode;
     int exit_flag = 0;
-     //for fnd device
+
     int dev_fnd;
     int dev_led;
-    
     int dev_text_lcd;
     int dev_dot_font;
     int dev_buzzer;
+
 
 	int set_num;
 	int row, col;
@@ -235,7 +235,7 @@ int output_process(int shm_id)
     shm_addr[0] = 1;
     dev_fnd         = open(FND_DEVICE, 				O_RDWR);
     dev_led         = open(LED_DEVICE, 				O_RDWR);
-    dev_buzzer      = open(FPGA_BUZZER_DEVICE, 		O_RDWR);
+	dev_buzzer      = open(FPGA_BUZZER_DEVICE, 		O_RDWR);
     dev_dot_font    = open(FPGA_DOT_DEVICE, 		O_WRONLY);
     dev_text_lcd    = open(FPGA_TEXT_LCD_DEVICE, 	O_WRONLY);
 
@@ -374,7 +374,6 @@ int output_process(int shm_id)
                 break;
             case 3:
 
-
                 //led initialize
                 lednum = 0;
                 retval = write(dev_led, &lednum, 1);
@@ -390,12 +389,6 @@ int output_process(int shm_id)
                 else 
                     set_num  = 0;
 
-                //write to dot for mode
-                for ( i = 0 ; i < sizeof(fpga_number[set_num]); i++){
-                    printf("[%c]", fpga_num[i]);
-
-                }
-                
                 retval = write(dev_dot_font, fpga_number[set_num], sizeof(fpga_number[set_num]));
                 if(retval < 0) {
                     printf("DOT write error..\n");
@@ -413,9 +406,10 @@ int output_process(int shm_id)
                     return -1;
                 }
 
+
                 //write to text lcd
                 writeString(shm_addr, ledtext);
-                printf("[%s]", ledtext);
+
                 retval = write(dev_text_lcd, ledtext, MAX_STRING);
                 if(retval < 0) {
                     printf("TEXT_LCD write error..\n");
@@ -433,13 +427,13 @@ int output_process(int shm_id)
                     return -1;
                 }
 
-                //retval = write(dev_dot_font, fpga_number[2], sizeof(fpga_number[2]));
-				/*
+                retval = write(dev_dot_font, fpga_number[2], sizeof(fpga_number[2]));
+				
                 if(retval < 0) {
                     printf("DOT init error..\n");
                     return -1;
                 }
-				*/
+				
                 //init text lcd
                 memset(ledtext, 0x00, MAX_STRING);
                 retval = write(dev_text_lcd, ledtext, MAX_STRING);
@@ -481,6 +475,8 @@ int output_process(int shm_id)
         if(exit_flag){
             break;
         } 
+		
+		usleep(200000);
 
     }
 
@@ -728,6 +724,8 @@ int main_process(int shm_id)
 
             case 3:
 
+
+
                 read(dev_switch, &push_sw_buff, buff_size);
 
                 //initialize
@@ -824,7 +822,6 @@ int main_process(int shm_id)
 
 
                 read(dev_switch, &push_sw_buff, buff_size);
-
 
                 memset( idxCount, 0x00, sizeof(idxCount) );
                 curStrnum = 0;
@@ -936,7 +933,7 @@ void writeString(int *shm_addr, unsigned char* str) {
 	memset(str, 0x00, MAX_STRING);
 
 	for( i = 0; i <shm_addr[40]; i++){
-		str[i] = shm_addr[8+1];
+		str[i] = shm_addr[8+i];
 	}
 }
 
@@ -990,16 +987,6 @@ void initDotshm(int* shm_addr) //initialize dot data
 }
 
 
-void initData(char fpga[][10]){
-	int i, j;
-	for( i = 0 ; i < 2; i++){
-		for( j = 0; j < MAX_COL; j++){
-			fpga[i][j] = 0;
-		}
-	}
-}
-
-
 void makeDotAry(int* shm_addr, char fpga[10]) {    //make dot data by using shared memory data
   int i, j;
   int sum;
@@ -1047,3 +1034,4 @@ int ppow(int num, int mul) {  //same as pow in math.h
 int makeIdx(int row, int col){
 	return row * 10 + col + 45;
 }
+
