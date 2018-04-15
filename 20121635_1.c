@@ -114,7 +114,7 @@ int main (int argc, char *argv[])
 
 }
 
-void input_process(int shm_id)
+int input_process(int shm_id)
 {
     struct input_event ev[BUFF_SIZE];
 
@@ -310,7 +310,7 @@ int output_process(int shm_id)
                 fnd_data[2] = shm_addr[3];
                 fnd_data[3] = shm_addr[4];
 
-                retval = write(dev_fnd, &data, 4);
+                retval = write(dev_fnd, &fnd_data, 4);
                 if(retval < 0) {
                     printf("write error!!\n");
                     return -1;
@@ -349,12 +349,12 @@ int output_process(int shm_id)
 
 
 }
-void main_process(int shm_id)
+int main_process(int shm_id)
 {
     unsigned char push_sw_buff[MAX_BUTTON];
     int exit_flag = 0;
     cursor curdot;
-    int idxCount[0] = {0};
+    int idxCount[9] = {0};
     time_t ctime;
     struct tm *tm;
     int dev_switch;
