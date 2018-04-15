@@ -49,7 +49,10 @@ void input_process(int);
 void output_process(int);
 void main_process(int);
 
-
+typedef struct __cursor {
+  int row;
+  int col;
+}cursor;
 
 char charTable [9][3] ={
     {'.','Q','Z'}, {'A','B','C'}, {'D','E','F'},
@@ -155,21 +158,6 @@ void input_process(int shm_id)
                 mode = shm_addr[0];
                 memset(shm_addr, 0x00, MEM_SIZE);
 
-                countnum=0;
-                countType=0;
-                count100=0;
-                count10=0;
-                count1=0;
-                tmpcount=0;
-
-                //for switch
-                addhour=0;
-                add10hour=0;
-                addmin=0;
-                add10min=0;
-                ////
-                ////for alarm
-                check=0;
                 //printf("before mem value : %d\n", shm_addr[0]);
                 if( mode == 5 )
                     shm_addr[0] = 1;
@@ -184,22 +172,6 @@ void input_process(int shm_id)
 
                 mode = shm_addr[0];
                 memset(shm_addr, 0x00, MEM_SIZE);
-
-                countnum=0;
-                countType=0;
-                count100=0;
-                count10=0;
-                count1=0;
-                tmpcount=0;
-
-                //for switch
-                addhour=0;
-                add10hour=0;
-                addmin=0;
-                add10min=0;
-                ////
-                ////for alarm
-                check=0;
 
                 if( mode[0] == 1 )
                     shm_addr[0] = 5;
@@ -379,7 +351,140 @@ void output_process(int shm_id)
 }
 void main_process(int shm_id)
 {
+    unsigned char push_sw_buff[MAX_BUTTON];
+    int exit_flag = 0;
+    cursor curdot;
+    int idxCount[0] = {0};
+    time_t ctime;
+    struct tm *tm;
     int *shm_addr = shmat(shm_id, (char *)NULL, 0);
+
+    int curStrnum   = 0;
+    int pushcount   = 0;
+    int pushcount2  = 0;
+    int tmpcount    = 0;
+    int buff_size   = 0;
+    int addhour     = 0;
+    int addmin      = 0;
+    int add10hour   = 0;
+    int add10min    = 0;
+    int countType   = 0;
+
+
+    shm_addr[0] = 1;
+    buff_size = sizeof(push_sw_buff);
+
+    //open device
+    dev_switch = open(SWITCH_DEVICE, O_RDWR);
+
+    if(dev_switch < 0) {
+        printf("SWITCH Device open Error..\n");
+        return -1;
+    }
+
+    while(1){
+        time(&ctime);
+        tm=localtime(&ctime);
+
+        switch( shm_addr[0]){
+            case -1:
+                exit_flag = 1;
+                break;
+            case 1:
+
+                shm_addr[44] = tm->tm_sec;
+
+                memset( idxCount, 0x00, sizeof(idxCount) );
+                
+                curStrnum = 0;
+                pushcount = 0;
+                pushcount2 = 0;
+                tmpcount = 0;
+                curdot.row = 6;
+                curdot.col = 0;
+                countType = 0;
+
+                if(tm->tm_hour + addhour > 23) {
+                    addhour = addhour - 24;
+                }
+                if(tm->tm_min + addmin > 59) {
+                    addmin = addmin - 60;
+                    addhour += 1;
+                }
+                //get board time
+                tmphour = tm->tm_hour + addhour;
+                tmpmin = tm->tm_min + addmin;
+
+
+                //calculate time
+                cur10hour = tmphour/10;
+                curhour = tmphour%10;
+                cur10min = tmpmin/10;
+                curmin = tmpmin%10;
+
+                //save time at shared memory
+                shm_addr[1] = cur10hour; 
+                shm_addr[2] = curhour;  
+                shm_addr[3] = cur10min;
+                shm_addr[4] = curmin;
+
+                //Mode change and led contorl
+
+                read(dev_switch, &push_sw_buff, buff_size);			
+
+                if(push_sw_buff[0] == 1 && shm_addr[5] == 0) {
+                    shm_addr[5] = 1;
+                    printf("chage mode start....\n");
+                }
+                else if(push_sw_buff[0] == 1 && shm_addr[5] == 1) {
+                    shm_addr[5] = 0;
+                    printf("change mode finished\n");
+                }
+
+                if(shm_addr[5] == 1) {
+                    ////for led
+                    if(shm_addr[44] % 2 == 0) {
+                        shm_addr[6] = 32;
+                    }
+                    else {
+                        shm_addr[6] = 16;
+                    }
+
+                    ///for switch
+
+                    if(push_sw_buff[1] == 1) {
+                        addmin = 0;
+                        addhour = 0;
+                    }
+                    else if(push_sw_buff[2] == 1) {
+                        addhour += 1;
+                    }
+                    else if(push_sw_buff[3] == 1) {
+                        addmin += 1;
+                    }
+
+                }
+                else {
+                    shm_addr[6] = 128;
+                }
+
+                break;
+
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            default:
+
+            if( exit_flag ){
+                break;
+            }
+
+        }
+
+    }
+
+
 
 }
 
