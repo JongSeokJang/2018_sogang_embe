@@ -265,7 +265,10 @@ int output_process(int shm_id)
         exit_flag = 0;
         mode = shm_addr[0];
         switch(mode){
+
+
             case -1:
+
                 memset( fnd_data,0x00, sizeof(fnd_data) );
                 retval = write(dev_fnd, fnd_data, 4);
                 if( retval < 0 ){
@@ -303,8 +306,11 @@ int output_process(int shm_id)
 
                 printf("exit................!!\n");
                 exit_flag = 1;
+				exit(1);
 
                 break;
+
+
             case 1:
 
                 retval = write(dev_dot_font, fpga_number[2], sizeof(fpga_number[2]));
@@ -340,6 +346,8 @@ int output_process(int shm_id)
                 }
 
                 break;
+
+
             case 2:
             
 
@@ -372,6 +380,8 @@ int output_process(int shm_id)
 
 
                 break;
+
+
             case 3:
 
                 //led initialize
@@ -418,7 +428,9 @@ int output_process(int shm_id)
 
                 break;
 
+
             case 4:
+
 
                 lednum = 0;
                 retval = write(dev_led, &lednum, 1);
@@ -544,9 +556,15 @@ int main_process(int shm_id)
         tm=localtime(&ctime);
 
         switch( shm_addr[0] ){
+
+
             case -1:
                 exit_flag = 1;
+				sleep(4);
+				exit(1);
                 break;
+
+
             case 1:
 
                 shm_addr[44] = tm->tm_sec;
@@ -760,7 +778,7 @@ int main_process(int shm_id)
                     for(i = 8 ; i < 40 ; i++) 
                         shm_addr[i] = 0;	
 
-                    curStrnum=0;
+                    curStrnum = 0;
                     shm_addr[40] = curStrnum;
                     pushcount = 0;
                     preval = -1;
