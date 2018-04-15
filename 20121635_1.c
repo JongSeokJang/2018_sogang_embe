@@ -40,10 +40,6 @@
 #define MAX_STRING      32
 #define MAX_BUTTON      9
 
-int ChangeToOcta(int);
-int ChangeToFour(int);
-int ChangeToTwo(int);
-
 void initDotshm(int*);
 
 int input_process(int);
@@ -366,11 +362,6 @@ int output_process(int shm_id)
         } 
 
     }
-    
-
-    
-
-
 
 }
 int main_process(int shm_id)
@@ -623,7 +614,8 @@ int main_process(int shm_id)
 
 
 
-void initDotshm(int* shm_addr) {   //initialize dot data
+void initDotshm(int* shm_addr) //initialize dot data
+{   
   int i;
   shm_addr[42] = 6;
   shm_addr[43] = 0;
@@ -639,27 +631,26 @@ int ChangeToOcta(int num)
     if( num < 8 ){
         return num;
     }
-    else{
-        return ChangeToOcta(num/8)*10 + num%8;
-    }
+        
+	return ChangeToOcta(num/8)*10 + num%8;
 }
+
 int ChangeToFour(int num)
 {
     if( num < 4 ){
         return num;
     }
-    else{
-        return ChangeToFour(num/4)*10 + num%4;
-    }
+        
+	return ChangeToFour(num/4)*10 + num%4;
 
 }
+
 int ChangeToTwo(int num)
 {
     if( num < 2 ){
         return num;
     }
-    else{
-        return ChangeToTwo(num/2)*10 + num%2;
-    }
+        
+	return ChangeToTwo(num/2)*10 + num%2;
 
 }
