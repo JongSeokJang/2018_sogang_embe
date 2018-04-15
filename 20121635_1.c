@@ -75,8 +75,6 @@ int main (int argc, char *argv[])
     int *shm_addr;
     int retval;
 
-    
-
     shm_id = shmget( (key_t)SHM_KEY, MEM_SIZE, IPC_CREAT|666);
     if( shm_id == -1){
         printf("shared memory access failed..\n");
@@ -103,14 +101,13 @@ int main (int argc, char *argv[])
                     break;
 
                 case 0  :
-                    retval = ouput_process(shm_id);
+                    retval = output_process(shm_id);
 
                 default :
                     retval = main_process(shm_id);
             }        
 
     }
-
 
 }
 
@@ -166,7 +163,7 @@ int input_process(int shm_id)
                 if( mode == 5 )
                     shm_addr[0] = 1;
                 else
-                    shm_addr[0]++;
+                    shm_addr[0] = mode + 1;
                 
                 printf("input shared mem value : %d\n", shm_addr[0]);
 
@@ -179,13 +176,12 @@ int input_process(int shm_id)
                 if( mode == 1 )
                     shm_addr[0] = 5;
                 else
-                    shm_addr[0]--;
+                    shm_addr[0] = mode -1;
 
                 printf("input shared mem value : %d\n", shm_addr[0]);
             }
             printf ("Type[%d] Value[%d] Code[%d]\n", ev[0].type, ev[0].value, (ev[0].code));
         }
-
 
     } 
 
@@ -196,7 +192,6 @@ int input_process(int shm_id)
 int output_process(int shm_id)
 {
     int *shm_addr = shmat(shm_id, (char *)NULL, 0);
-
 
     unsigned char lednum;
     unsigned char fnd_data[4];
@@ -216,12 +211,12 @@ int output_process(int shm_id)
 
     printf("output process %d started\n", getpid());
 
-    shm_addr[0]= 1;
-    dev_fnd         = open(FND_DEVICE, O_RDWR);
-    dev_led         = open(LED_DEVICE, O_RDWR);
-    dev_text_lcd    = open(FPGA_TEXT_LCD_DEVICE, O_WRONLY);
-    dev_dot_font    = open(FPGA_DOT_DEVICE, O_WRONLY);
-    dev_buzzer      = open(FPGA_BUZZER_DEVICE, O_RDWR);
+    shm_addr[0] = 1;
+    dev_fnd         = open(FND_DEVICE, 				O_RDWR);
+    dev_led         = open(LED_DEVICE, 				O_RDWR);
+    dev_buzzer      = open(FPGA_BUZZER_DEVICE, 		O_RDWR);
+    dev_dot_font    = open(FPGA_DOT_DEVICE, 		O_WRONLY);
+    dev_text_lcd    = open(FPGA_TEXT_LCD_DEVICE, 	O_WRONLY);
 
     if(dev_fnd < 0) {
         printf("FND Device open Error..\n");
@@ -374,6 +369,7 @@ int main_process(int shm_id)
     int tmpmin      = 0;
     int cur10hour   = 0;
     int cur10min    = 0;
+    int curhour 	= 0;
     int curmin      = 0;
     
 
@@ -477,16 +473,23 @@ int main_process(int shm_id)
                 break;
 
             case 2:
+				break;
             case 3:
+				break;
             case 4:
+				break;
             case 5:
+				break;
             default:
+				break;
 
-            if( exit_flag ){
-                break;
-            }
 
         }
+
+		if( exit_flag ){
+			break;
+		}
+		usleep(200000);
 
     }
 
