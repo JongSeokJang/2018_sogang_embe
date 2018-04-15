@@ -50,6 +50,11 @@ int changeToTwo(int);
 int changeToFour(int);
 int changeToOcta(int);
 
+void makeString(int* , int , char );
+void writeString(int *, unsigned char* );
+void countPush(int *shm_addr, int pushcount);
+
+
 typedef struct __cursor {
   int row;
   int col;
@@ -208,6 +213,8 @@ int output_process(int shm_id)
     int dev_text_lcd;
     int dev_dot_font;
     int dev_buzzer;
+
+	int set_num;
 
     printf("output process %d started\n", getpid());
 
@@ -377,19 +384,19 @@ int output_process(int shm_id)
                 }
 
                 //data for fnd counter
-                data[0] = shm_addr[1];
-                data[1] = shm_addr[2];
-                data[2] = shm_addr[3];
-                data[3] = shm_addr[4];
-                retval = write(dev_fnd, &data, 4);
+                fnd_data[0] = shm_addr[1];
+                fnd_data[1] = shm_addr[2];
+                fnd_data[2] = shm_addr[3];
+                fnd_data[3] = shm_addr[4];
+                retval = write(dev_fnd, &fnd_data, 4);
                 if(retval < 0) {
                     printf("FND write error..\n");
                     return -1;
                 }
 
                 //write to text lcd
-                writeString(shm_addr, str);
-                retval = write(dev_text_lcd, ledtext, VALID_CHAR);
+                writeString(shm_addr, ledtext);
+                retval = write(dev_text_lcd, ledtext, MAX_STRING);
                 if(retval < 0) {
                     printf("TEXT_LCD write error..\n");
                     return -1;
@@ -456,7 +463,8 @@ int main_process(int shm_id)
     int premode     = -1;
     int preval      = -1;
 
-    
+   	int i; 
+
 
     shm_addr[0] = 1;
     buff_size = sizeof(push_sw_buff);
@@ -557,6 +565,7 @@ int main_process(int shm_id)
 
                 break;
 
+
             case 2:
 
 				textMode 	= 0;
@@ -649,6 +658,8 @@ int main_process(int shm_id)
 
 
 				break;
+
+
             case 3:
 
 
@@ -778,6 +789,22 @@ void makeString(int* shm_addr, int curStrnum, char val) {  //write string to sha
 
 }
 
+void writeString(int *shm_addr, unsigned char* str) {
+	int i;
+	memset(str, 0x00, MAX_STRING);
+
+	for( i = 0; i <shm_addr[40]; i++){
+		str[i] = shm_addr[8+1];
+	}
+}
+
+void countPush(int *shm_addr, int pushcount){
+	pushcount %= 1000;
+	shm_addr[1] = pushcount/1000;
+	shm_addr[2] = (pushcount%1000)/100;
+	shm_addr[3] = (pushcount%100)/10;
+	shm_addr[4] = pushcount%10;
+}
 
 void initDotshm(int* shm_addr) //initialize dot data
 {   
@@ -819,3 +846,4 @@ int changeToTwo(int num)
 	return changeToTwo(num/2)*10 + num%2;
 
 }
+
