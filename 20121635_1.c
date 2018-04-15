@@ -352,6 +352,49 @@ int output_process(int shm_id)
 
                 break;
             case 3:
+
+
+                //led initialize
+                lednum = 0;
+                retval = write(dev_led, &lednum, 1);
+                if(retval < 0) {
+                    printf("write error!!\n");
+                    return -1;
+                }	
+                //init dot
+                initDotshm(shm_addr);
+
+                if(shm_addr[7] == 0) 
+                    set_num = 1;
+                else 
+                    set_num  = 0;
+
+                //write to dot for mode
+                retval = write(dev_dot_font, fpga_number[set_num], sizeof(fpga_number[set_num]));
+                if(retval < 0) {
+                    printf("DOT write error..\n");
+                    return -1;
+                }
+
+                //data for fnd counter
+                data[0] = shm_addr[1];
+                data[1] = shm_addr[2];
+                data[2] = shm_addr[3];
+                data[3] = shm_addr[4];
+                retval = write(dev_fnd, &data, 4);
+                if(retval < 0) {
+                    printf("FND write error..\n");
+                    return -1;
+                }
+
+                //write to text lcd
+                writeString(shm_addr, str);
+                retval = write(dev_text_lcd, ledtext, VALID_CHAR);
+                if(retval < 0) {
+                    printf("TEXT_LCD write error..\n");
+                    return -1;
+                }
+
                 break;
             case 4:
                 break;
@@ -407,6 +450,11 @@ int main_process(int shm_id)
     int tmpcount4   = 0;
     int tmpcount8   = 0;
     int tmpcount10  = 0;
+
+    int buttidx     = 0;
+    int buttcount   = 0;
+    int premode     = -1;
+    int preval      = -1;
 
     
 
@@ -520,18 +568,6 @@ int main_process(int shm_id)
 				printf("ini");
 
                 memset( idxCount, 0x00, sizeof(idxCount) );
-
-
-                textMode = 0;
-                curStrnum = 0;
-                pushcount = 0;
-                pushcount2 = 0;
-                addhour = 0;
-                addmin = 0;
-                curdot.row = 6;
-                curdot.col = 0;
-                
-
         
                 read(dev_switch, &push_sw_buff, buff_size);
 
@@ -614,6 +650,97 @@ int main_process(int shm_id)
 
 				break;
             case 3:
+
+
+                read(dev_switch, &push_sw_buff, buff_size);
+
+                //initialize
+                buttcount = 0;
+                pushcount2 = 0;
+                tmpcount = 0;
+                curdot.row = 6;
+                curdot.col = 0;
+                countType = 0;
+
+                for(i = 0 ; i < 9 ; i++) {
+                    if(push_sw_buff[i] == 1)
+                    buttcount++;
+                }	
+
+                if(buttcount > 2){
+
+                    continue;
+                }
+                else if((push_sw_buff[4] * push_sw_buff[5]) == 1) {  //Mode change
+
+                    premode = textMode;
+                    textMode++;
+                    textMode = textMode % 2;
+                    shm_addr[7] = textMode;
+                    //initialize
+                    preval = -1;
+                    for(i   = 0 ; i < 9 ; i++) 
+                    idxCount[i] = 0;
+                }
+                else if((push_sw_buff[1] * push_sw_buff[2]) == 1) { //clear string
+
+                    for(i = 8 ; i < 40 ; i++) 
+                    shm_addr[i] = 0;	
+                    curStrnum=0;
+                    shm_addr[40] = curStrnum;
+                    pushcount = 0;
+                    preval = -1;
+                    printf("clear text....\n");
+                }
+                else if((push_sw_buff[7] * push_sw_buff[8]) == 1) { //insert space
+
+                    makeString(shm_addr, curStrnum, ' ');
+                    if(curStrnum != 32)
+                    curStrnum++;
+                    shm_addr[40] = curStrnum;
+                    pushcount++;
+                }
+                else if(buttcount == 1) {	
+
+                    for(i = 0 ; i < 9 ; i++) {
+                    if(push_sw_buff[i] == 1) {
+                        buttidx = i;
+                        break;
+                    }
+                    }
+
+                    if(textMode == 0) {  //alphabet mode
+
+                    if(preval != -1 && preval == buttidx)
+                        curStrnum--;
+
+                    makeString(shm_addr, curStrnum, charTable[buttidx][idxCount[buttidx]]);
+                    idxCount[buttidx]++;
+                    idxCount[buttidx] = idxCount[buttidx] % 3;
+
+                    preval = buttidx;
+
+
+                    if(curStrnum != 32)
+                        curStrnum++;
+
+                    shm_addr[40] = curStrnum;
+                    }
+                    else if(textMode == 1) { //number mode
+
+                        makeString(shm_addr, curStrnum, buttidx + 49);	
+
+                        if(curStrnum != 32)
+                        curStrnum++;
+                        shm_addr[40] = curStrnum;
+                    }
+                    pushcount++;
+
+                }
+                // for fnd counter
+                countPush(shm_addr, pushcount);
+
+
 				break;
             case 4:
 				break;
@@ -636,6 +763,20 @@ int main_process(int shm_id)
 
 }
 
+void makeString(int* shm_addr, int curStrnum, char val) {  //write string to shared memory
+  int i;
+  if(curStrnum + 1 > 32) {
+    for(i = 8 ; i < 39 ; i++) {
+      shm_addr[i] = shm_addr[i + 1];
+    }
+    shm_addr[39] = val;
+  }		
+  else {
+    shm_addr[curStrnum+8] = val;
+
+  }
+
+}
 
 
 void initDotshm(int* shm_addr) //initialize dot data
