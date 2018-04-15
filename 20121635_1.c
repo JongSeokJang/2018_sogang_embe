@@ -46,6 +46,10 @@ int input_process(int);
 int output_process(int);
 int main_process(int);
 
+int changeToTwo(int);
+int changeToFour(int);
+int changeToOcta(int);
+
 typedef struct __cursor {
   int row;
   int col;
@@ -550,7 +554,7 @@ int main_process(int shm_id)
 
                 if(countnum == 8) {   //calcuate octal number
 
-                    tmpcount8 = changeToOcta(tmpcount);
+                   	tmpcount8 = changeToOcta(tmpcount);
                     tmpcount8 = tmpcount8 % 1000;
                     count100 = tmpcount8 / 100;
                     count10 = (tmpcount8 - count100 * 100)/10;
@@ -626,31 +630,31 @@ void initDotshm(int* shm_addr) //initialize dot data
 
 
 
-int ChangeToOcta(int num)
+int changeToOcta(int num)
 {
     if( num < 8 ){
         return num;
     }
         
-	return ChangeToOcta(num/8)*10 + num%8;
+	return changeToOcta(num/8)*10 + num%8;
 }
 
-int ChangeToFour(int num)
+int changeToFour(int num)
 {
     if( num < 4 ){
         return num;
     }
         
-	return ChangeToFour(num/4)*10 + num%4;
+	return changeToFour(num/4)*10 + num%4;
 
 }
 
-int ChangeToTwo(int num)
+int changeToTwo(int num)
 {
     if( num < 2 ){
         return num;
     }
         
-	return ChangeToTwo(num/2)*10 + num%2;
+	return changeToTwo(num/2)*10 + num%2;
 
 }
