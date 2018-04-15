@@ -4,3 +4,4 @@
 	arm-none-linux-gnueabi-gcc -static -c -o 20121635_1.o 20121635_1.c
 clean :
 	rm 20121635_1.o 20121635_1
+
