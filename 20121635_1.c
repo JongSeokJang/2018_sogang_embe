@@ -321,6 +321,35 @@ int output_process(int shm_id)
                 break;
             case 2:
             
+
+                retval = write(dev_dot_font, fpga_number[2], sizeof(fpga_number[2]));
+                if(retval < 0) {
+                    printf("DOT init error..\n");
+                    return -1;
+                }
+
+                memset(ledtext, 0x00, MAX_STRING);
+                retval = write(dev_text_lcd, ledtext, MAX_STRING);
+
+                fnd_data[0] = 0;
+                fnd_data[1] = shm_addr[2];
+                fnd_data[2] = shm_addr[3];
+                fnd_data[3] = shm_addr[4];
+
+                retval = write(dev_fnd, &fnd_data, 4);
+                if(retval < 0) {
+                    printf("write error..\n");
+                    return -1;
+                }
+
+                lednum = shm_addr[6];
+                retval = write(dev_led, &lednum, 1);
+                if(retval < 0) {
+                    printf("write error!!\n");
+                    return -1;
+                }
+
+
                 break;
             case 3:
                 break;
@@ -364,13 +393,19 @@ int main_process(int shm_id)
     int addmin      = 0;
     int add10hour   = 0;
     int add10min    = 0;
-    int countType   = 0;
+    
     int tmphour     = 0;
     int tmpmin      = 0;
     int cur10hour   = 0;
     int cur10min    = 0;
-    int curhour 	= 0;
     int curmin      = 0;
+
+    int textMode    = 0;
+    int countnum    = 0;
+    int countType   = 0;
+    int count1      = 0;
+    int count10     = 0;
+    int count100    = 0;
     
 
     shm_addr[0] = 1;
@@ -473,6 +508,88 @@ int main_process(int shm_id)
                 break;
 
             case 2:
+
+                memset( idxCount, 0x00, sizeof(idxCount) );
+        
+                read(dev_switch, &push_sw_buff, buff_size);
+
+                //set type of number
+                if(push_sw_buff[0] == 1) {
+                    countType++;
+                    countType = countType % 4;
+                }
+                //set led number
+                if(countType == 0) {   
+                    countnum = 10;
+                    shm_addr[6] = 64;
+                }
+
+                else if(countType == 1) { 
+                    countnum = 8;
+                    shm_addr[6] = 32;
+                }
+
+                else if(countType  == 2) { 
+                    countnum = 4;
+                    shm_addr[6] = 16;
+                }
+
+                else {  
+                    countnum = 2;
+                    shm_addr[6] = 128;
+                }
+
+
+                if(push_sw_buff[1] == 1) {  //100
+                    tmpcount += (countnum*countnum);	
+                }
+                else if(push_sw_buff[2] == 1) { //10
+                    tmpcount += countnum;
+                }
+                else if(push_sw_buff[3] == 1) {  //1
+                    tmpcount += 1;
+                }
+
+                if(countnum == 8) {   //calcuate octal number
+
+                    tmpcount8 = octa(tmpcount);
+                    tmpcount8 = tmpcount8 % 1000;
+                    count100 = tmpcount8 / 100;
+                    count10 = (tmpcount8 - count100 * 100)/10;
+                    count1 = tmpcount8 - count100*100 - count10 * 10;
+                }
+                else if(countnum == 4) { //calculate four number
+
+                    tmpcount4 = four(tmpcount);
+                    tmpcount4 = tmpcount4 % 1000;
+                    count100 = tmpcount4 / 100;
+                    count10 = (tmpcount4 - count100 * 100)/10;
+                    count1 = tmpcount4 - count100*100 - count10 * 10;
+                }
+                else if(countnum == 2) {//calculate binary number
+
+                    tmpcount2 = two(tmpcount);
+                    tmpcount2 = tmpcount2 % 1000;
+                    count100 = tmpcount2 / 100;
+                    count10 = (tmpcount2 - count100 * 100)/10;
+                    count1 = tmpcount2 - count100*100 - count10 * 10;
+
+                }
+                else {// calcuate decimal number
+
+                    tmpcount10 = tmpcount % 1000;
+                    count100 = tmpcount10 / 100;
+                    count10 = (tmpcount10 - count100 * 100)/10;
+                    count1 = tmpcount10 - count100*100 - count10 * 10;
+
+                }
+
+                //save calcuated number
+                shm_addr[2] = count100;
+                shm_addr[3] = count10;
+                shm_addr[4] = count1;
+
+
 				break;
             case 3:
 				break;
