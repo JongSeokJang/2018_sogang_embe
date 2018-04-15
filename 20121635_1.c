@@ -399,6 +399,7 @@ int main_process(int shm_id)
     int cur10hour   = 0;
     int cur10min    = 0;
     int curmin      = 0;
+    int curhour     = 0;
 
     int textMode    = 0;
     int countnum    = 0;
@@ -406,6 +407,12 @@ int main_process(int shm_id)
     int count1      = 0;
     int count10     = 0;
     int count100    = 0;
+
+    int tmpcount2   = 0;
+    int tmpcount4   = 0;
+    int tmpcount8   = 0;
+    int tmpcount10  = 0;
+
     
 
     shm_addr[0] = 1;
@@ -552,7 +559,7 @@ int main_process(int shm_id)
 
                 if(countnum == 8) {   //calcuate octal number
 
-                    tmpcount8 = octa(tmpcount);
+                    tmpcount8 = changeToOcta(tmpcount);
                     tmpcount8 = tmpcount8 % 1000;
                     count100 = tmpcount8 / 100;
                     count10 = (tmpcount8 - count100 * 100)/10;
@@ -560,7 +567,7 @@ int main_process(int shm_id)
                 }
                 else if(countnum == 4) { //calculate four number
 
-                    tmpcount4 = four(tmpcount);
+                    tmpcount4 = changeToFour(tmpcount);
                     tmpcount4 = tmpcount4 % 1000;
                     count100 = tmpcount4 / 100;
                     count10 = (tmpcount4 - count100 * 100)/10;
@@ -568,7 +575,7 @@ int main_process(int shm_id)
                 }
                 else if(countnum == 2) {//calculate binary number
 
-                    tmpcount2 = two(tmpcount);
+                    tmpcount2 = changeToTwo(tmpcount);
                     tmpcount2 = tmpcount2 % 1000;
                     count100 = tmpcount2 / 100;
                     count10 = (tmpcount2 - count100 * 100)/10;
