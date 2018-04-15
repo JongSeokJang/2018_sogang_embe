@@ -391,6 +391,11 @@ int output_process(int shm_id)
                     set_num  = 0;
 
                 //write to dot for mode
+                for ( i = 0 ; i < sizeof(fpga_number[set_num]); i++){
+                    printf("[%c]", fpga_num[i]);
+
+                }
+                
                 retval = write(dev_dot_font, fpga_number[set_num], sizeof(fpga_number[set_num]));
                 if(retval < 0) {
                     printf("DOT write error..\n");
@@ -410,6 +415,7 @@ int output_process(int shm_id)
 
                 //write to text lcd
                 writeString(shm_addr, ledtext);
+                printf("[%s]", ledtext);
                 retval = write(dev_text_lcd, ledtext, MAX_STRING);
                 if(retval < 0) {
                     printf("TEXT_LCD write error..\n");
@@ -722,7 +728,6 @@ int main_process(int shm_id)
 
             case 3:
 
-
                 read(dev_switch, &push_sw_buff, buff_size);
 
                 //initialize
@@ -739,7 +744,6 @@ int main_process(int shm_id)
                 }	
 
                 if(buttcount > 2){
-
                     continue;
                 }
                 else if((push_sw_buff[4] * push_sw_buff[5]) == 1) {  //Mode change
@@ -750,13 +754,14 @@ int main_process(int shm_id)
                     shm_addr[7] = textMode;
                     //initialize
                     preval = -1;
-                    for(i   = 0 ; i < 9 ; i++) 
-                    idxCount[i] = 0;
+                    memset( idxCount, 0x00, sizeof(idxCount) );
+                    
                 }
                 else if((push_sw_buff[1] * push_sw_buff[2]) == 1) { //clear string
 
                     for(i = 8 ; i < 40 ; i++) 
-                    shm_addr[i] = 0;	
+                        shm_addr[i] = 0;	
+
                     curStrnum=0;
                     shm_addr[40] = curStrnum;
                     pushcount = 0;
@@ -774,10 +779,10 @@ int main_process(int shm_id)
                 else if(buttcount == 1) {	
 
                     for(i = 0 ; i < 9 ; i++) {
-                    if(push_sw_buff[i] == 1) {
-                        buttidx = i;
-                        break;
-                    }
+                        if(push_sw_buff[i] == 1) {
+                            buttidx = i;
+                            break;
+                        }
                     }
 
                     if(textMode == 0) {  //alphabet mode
