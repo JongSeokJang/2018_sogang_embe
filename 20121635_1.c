@@ -60,6 +60,7 @@ void makeDotAry(int* shm_addr, char fpga[10]);
 void refreshDot(int* shm_addr);
 
 int ppow(int num, int mul);
+int makeIdx(int row, int col);
 
 
 typedef struct __cursor {
@@ -211,7 +212,7 @@ int output_process(int shm_id)
     unsigned char retval;
     unsigned char buzzData;
 
-    char fpga_data[10];
+    char fpga_data[10] = {0};
 
     int fd, rd, mode;
     int exit_flag = 0;
@@ -224,6 +225,7 @@ int output_process(int shm_id)
     int dev_buzzer;
 
 	int set_num;
+	int row, col;
 
     int i, j;
 
@@ -414,8 +416,8 @@ int output_process(int shm_id)
                 }
 
                 break;
-            case 4:
 
+            case 4:
 
                 lednum = 0;
                 retval = write(dev_led, &lednum, 1);
@@ -423,34 +425,34 @@ int output_process(int shm_id)
                     printf("LED init error..\n");
                     return -1;
                 }
-                retval = write(dev_dot_font, fpga_number[2], sizeof(fpga_number[2]));
+
+                //retval = write(dev_dot_font, fpga_number[2], sizeof(fpga_number[2]));
+				/*
                 if(retval < 0) {
                     printf("DOT init error..\n");
                     return -1;
                 }
+				*/
                 //init text lcd
                 memset(ledtext, 0x00, MAX_STRING);
-
                 retval = write(dev_text_lcd, ledtext, MAX_STRING);
 
 
-
-                initData(fpga_data);
+				memset(fpga_data, 0x00, sizeof(fpga_data) );
 
                 //write precedent image
                 makeDotAry(shm_addr, fpga_data);
-
 
                 /////write cursor
                 row = shm_addr[42];
                 col = shm_addr[43];
 
                 if(shm_addr[44] % 2 == 0 && shm_addr[makeIdx(row, col)] == 0 && shm_addr[115] == 0) {
-                    fpga_data[0][col] += ppow(2, row);
-                    retval = write(dev_dot_font, &fpga_data, sizeof(fpga_data));
+                    fpga_data[col] += ppow(2, row);
+                    retval = write(dev_dot_font, fpga_data, sizeof(fpga_data));
                 }
 
-                write(dev_dot_font, &fpga_data, sizeof(fpga_data));
+                write(dev_dot_font, fpga_data, sizeof(fpga_data));
 
                 //write fnd...
                 fnd_data[0] = shm_addr[1];
@@ -523,7 +525,6 @@ int main_process(int shm_id)
 
    	int i; 
 
-
     shm_addr[0] = 1;
     buff_size = sizeof(push_sw_buff);
 
@@ -539,7 +540,7 @@ int main_process(int shm_id)
         time(&ctime);
         tm=localtime(&ctime);
 
-        switch( shm_addr[0]){
+        switch( shm_addr[0] ){
             case -1:
                 exit_flag = 1;
                 break;
@@ -816,22 +817,19 @@ int main_process(int shm_id)
 
                 read(dev_switch, &push_sw_buff, buff_size);
 
-                //initialize
-                for(i = 0 ; i < 9 ; i++) {
-                    idxCount[i] = 0;
-                }
+
+                memset( idxCount, 0x00, sizeof(idxCount) );
                 curStrnum = 0;
                 pushcount = 0;
                 buttcount = 0;
                 textMode = 0;
                 preval = -1;
                 premode = -1;
-                /////get time
-                time(&ctime);
-                tm=localtime(&ctime);
+
 
                 shm_addr[44] = tm->tm_sec;
                 ///move cursor...
+
 
                 for(i = 0 ; i < 9 ; i++) {
                     if(push_sw_buff[i] == 1)
@@ -843,24 +841,24 @@ int main_process(int shm_id)
                 else if(push_sw_buff[1] == 1) {  //go up
                     printf("cursor go up!!..\n");
                     if(curdot.col > 0)
-                    curdot.col--;
+                    	curdot.col--;
                 }
                 else if(push_sw_buff[3] == 1) {
                     printf("cursor go left!!..\n"); //go left
                     if(curdot.row < 6)
-                    curdot.row++;
+                    	curdot.row++;
                 }
                 else if(push_sw_buff[5] == 1) {
                     printf("cursor go right!!..\n");  //go right
                     if(curdot.row > 0)
-                    curdot.row--;
+                    	curdot.row--;
                 }
                 else if(push_sw_buff[7] == 1) {  //go down
                     printf("cursor go down!!..\n");
                     if(curdot.col < 9) 
-                    curdot.col++;
+                    	curdot.col++;
                 }
-                /////
+
                 if(buttcount > 0)
                     pushcount2++;
 
@@ -891,16 +889,6 @@ int main_process(int shm_id)
                 }
                 //fnd counter
                 countPush(shm_addr, pushcount2);
-
-
-
-
-
-
-
-
-
-
 
 				break;
             case 5:
@@ -998,6 +986,15 @@ void initDotshm(int* shm_addr) //initialize dot data
 }
 
 
+void initData(char fpga[][10]){
+	int i, j;
+	for( i = 0 ; i < 2; i++){
+		for( j = 0; j < MAX_COL; j++){
+			fpga[i][j] = 0;
+		}
+	}
+}
+
 
 void makeDotAry(int* shm_addr, char fpga[10]) {    //make dot data by using shared memory data
   int i, j;
@@ -1043,3 +1040,7 @@ int ppow(int num, int mul) {  //same as pow in math.h
 
 }
 
+
+int makeIdx(int row, int col){
+	return row * 10 + col + 45;
+}
