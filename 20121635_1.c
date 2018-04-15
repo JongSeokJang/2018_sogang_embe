@@ -519,6 +519,18 @@ int main_process(int shm_id)
 				curdot.col 	= 0;
 
                 memset( idxCount, 0x00, sizeof(idxCount) );
+
+
+                textMode = 0;
+                curStrnum = 0;
+                pushcount = 0;
+                pushcount2 = 0;
+                addhour = 0;
+                addmin = 0;
+                curdot.row = 6;
+                curdot.col = 0;
+                
+
         
                 read(dev_switch, &push_sw_buff, buff_size);
 
