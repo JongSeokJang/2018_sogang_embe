@@ -517,6 +517,7 @@ int main_process(int shm_id)
 				pushcount2 	= 0;
 				curdot.row 	= 6;
 				curdot.col 	= 0;
+				printf("ini");
 
                 memset( idxCount, 0x00, sizeof(idxCount) );
 
