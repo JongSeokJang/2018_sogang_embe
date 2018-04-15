@@ -121,6 +121,7 @@ int main (int argc, char *argv[])
             }        
 
     }
+	return 0;
 
 }
 
@@ -812,6 +813,8 @@ int main_process(int shm_id)
 
 
 				break;
+
+
             case 4:
 
 
@@ -896,7 +899,6 @@ int main_process(int shm_id)
             default:
 				break;
 
-
         }
 
 		if( exit_flag ){
@@ -906,9 +908,8 @@ int main_process(int shm_id)
 
     }
 
-
-
 }
+
 
 void makeString(int* shm_addr, int curStrnum, char val) {  //write string to shared memory
   int i;
@@ -941,8 +942,6 @@ void countPush(int *shm_addr, int pushcount){
 	shm_addr[3] = (pushcount%100)/10;
 	shm_addr[4] = pushcount%10;
 }
-
-
 
 
 int changeToOcta(int num)
@@ -1039,7 +1038,6 @@ int ppow(int num, int mul) {  //same as pow in math.h
   return ret;
 
 }
-
 
 int makeIdx(int row, int col){
 	return row * 10 + col + 45;
