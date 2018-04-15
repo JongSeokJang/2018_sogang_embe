@@ -38,6 +38,7 @@
 #define MAX_ROW         7
 #define MAX_COL         10
 #define MAX_STRING      32
+#define MAX_BUTTON      9
 
 int ChangeToOcta(int);
 int ChangeToFour(int);
@@ -45,9 +46,9 @@ int ChangeToTwo(int);
 
 void initDotshm(int*);
 
-void input_process(int);
-void output_process(int);
-void main_process(int);
+int input_process(int);
+int output_process(int);
+int main_process(int);
 
 typedef struct __cursor {
   int row;
@@ -72,6 +73,7 @@ int main (int argc, char *argv[])
 {
     int shm_id;
     int *shm_addr;
+    int retval;
 
     
 
@@ -88,7 +90,7 @@ int main (int argc, char *argv[])
              break;
 
         case 0 :
-            input_process(shm_id);
+            retval = input_process(shm_id);
             break;
 
         default :
@@ -101,10 +103,10 @@ int main (int argc, char *argv[])
                     break;
 
                 case 0  :
-                    ouput_process(shm_id);
+                    retval = ouput_process(shm_id);
 
                 default :
-                    main_process(shm_id);
+                    retval = main_process(shm_id);
             }        
 
     }
@@ -179,7 +181,6 @@ void input_process(int shm_id)
                 else
                     shm_addr[0]--;
 
-                printf("vol- Mode : %s\n", function[shm_addr[0]-1]); 
                 printf("input shared mem value : %d\n", shm_addr[0]);
             }
             printf ("Type[%d] Value[%d] Code[%d]\n", ev[0].type, ev[0].value, (ev[0].code));
@@ -192,7 +193,7 @@ void input_process(int shm_id)
     return ;
 
 }
-void output_process(int shm_id)
+int output_process(int shm_id)
 {
     int *shm_addr = shmat(shm_id, (char *)NULL, 0);
 
@@ -208,7 +209,7 @@ void output_process(int shm_id)
      //for fnd device
     int dev_fnd;
     int dev_led;
-    int dev_switch;
+    
     int dev_text_lcd;
     int dev_dot_font;
     int dev_buzzer;
@@ -356,6 +357,7 @@ void main_process(int shm_id)
     int idxCount[0] = {0};
     time_t ctime;
     struct tm *tm;
+    int dev_switch;
     int *shm_addr = shmat(shm_id, (char *)NULL, 0);
 
     int curStrnum   = 0;
@@ -368,7 +370,12 @@ void main_process(int shm_id)
     int add10hour   = 0;
     int add10min    = 0;
     int countType   = 0;
-
+    int tmphour     = 0;
+    int tmpmin      = 0;
+    int cur10hour   = 0;
+    int cur10min    = 0;
+    int curmin      = 0;
+    
 
     shm_addr[0] = 1;
     buff_size = sizeof(push_sw_buff);
@@ -525,7 +532,7 @@ int ChangeToTwo(int num)
         return num;
     }
     else{
-        return ChangeToTwo(num/2)*10 + num%2l
+        return ChangeToTwo(num/2)*10 + num%2;
     }
 
 }
