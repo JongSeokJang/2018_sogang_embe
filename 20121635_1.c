@@ -56,7 +56,7 @@ typedef struct __cursor {
 
 char charTable [9][3] ={
     {'.','Q','Z'}, {'A','B','C'}, {'D','E','F'},
-    {'G','H','I'}, {'J','K','L'}, {'M','N'.'O'},
+    {'G','H','I'}, {'J','K','L'}, {'M','N','O'},
     {'P','R','S'}, {'T','U','V'}, {'W','X','Y'}
 };
 
@@ -75,7 +75,7 @@ int main (int argc, char *argv[])
 
     
 
-    shmi_id = shmget( (key_t)SHM_KEY, MEM_SIZE, IPC_CREATE|666);
+    shm_id = shmget( (key_t)SHM_KEY, MEM_SIZE, IPC_CREAT|666);
     if( shm_id == -1){
         printf("shared memory access failed..\n");
         return -1;
@@ -115,11 +115,13 @@ int main (int argc, char *argv[])
 void input_process(int shm_id)
 {
     struct input_event ev[BUFF_SIZE];
+
     
     char *device    = "/dev/input/event0";              // READY device
     int *shm_addr   = shmat(shm_id, (char *)NULL, 0);
 
     int fd, rd, value, mode;
+    int size = sizeof(struct input_event);
     
     shm_addr[0] = 1;    // mode
     memset(shm_addr, 0, MEM_SIZE);
@@ -164,7 +166,6 @@ void input_process(int shm_id)
                 else
                     shm_addr[0]++;
                 
-                printf("vol+, Mode : %s\n", function[shm_addr[0]-1]);
                 printf("input shared mem value : %d\n", shm_addr[0]);
 
             }
@@ -173,7 +174,7 @@ void input_process(int shm_id)
                 mode = shm_addr[0];
                 memset(shm_addr, 0x00, MEM_SIZE);
 
-                if( mode[0] == 1 )
+                if( mode == 1 )
                     shm_addr[0] = 5;
                 else
                     shm_addr[0]--;
@@ -185,10 +186,8 @@ void input_process(int shm_id)
         }
 
 
-        } 
+    } 
 
-
-    }
     printf("input process %d finished\n", getpid());
     return ;
 
