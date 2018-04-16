@@ -1155,7 +1155,6 @@ int main_process(int shm_id)
 
 }
 
-
 void makeString(int* shm_addr, int curStrnum, char val) {  //write string to shared memory
   int i;
   if(curStrnum + 1 > 32) {
@@ -1166,9 +1165,7 @@ void makeString(int* shm_addr, int curStrnum, char val) {  //write string to sha
   }		
   else {
     shm_addr[curStrnum+8] = val;
-
   }
-
 }
 
 void writeString(int *shm_addr, unsigned char* str) {
@@ -1188,13 +1185,11 @@ void countPush(int *shm_addr, int pushcount){
 	shm_addr[4] = pushcount%10;
 }
 
-
 int changeToOcta(int num)
 {
     if( num < 8 ){
         return num;
-    }
-        
+    }  
 	return changeToOcta(num/8)*10 + num%8;
 }
 
@@ -1202,8 +1197,7 @@ int changeToFour(int num)
 {
     if( num < 4 ){
         return num;
-    }
-        
+    }   
 	return changeToFour(num/4)*10 + num%4;
 
 }
@@ -1212,12 +1206,10 @@ int changeToTwo(int num)
 {
     if( num < 2 ){
         return num;
-    }
-        
+    }   
 	return changeToTwo(num/2)*10 + num%2;
 
 }
-
 
 void initDotshm(int* shm_addr) //initialize dot data
 {   
@@ -1263,7 +1255,6 @@ void inverseDot(int* shm_addr) {   //inverse dot data
 }
 
 
-
 int ppow(int num, int mul) {  //same as pow in math.h
   int i;
   int ret = 1;
@@ -1271,7 +1262,6 @@ int ppow(int num, int mul) {  //same as pow in math.h
     ret = ret*num;
   }
   return ret;
-
 }
 
 int makeIdx(int row, int col){
