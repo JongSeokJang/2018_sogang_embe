@@ -50,19 +50,22 @@ int changeToTwo(int);
 int changeToFour(int);
 int changeToOcta(int);
 
-
 void makeString(int* , int , char );
 void writeString(int *, unsigned char* );
 void countPush(int *shm_addr, int pushcount);
-void inverseDot(int* shm_addr);
-
 
 void makeDotAry(int* shm_addr, char fpga[10]);
+void inverseDot(int* shm_addr);
 void refreshDot(int* shm_addr);
+
+
+int makeAnswer(int, int, int);
+void makeNumber(int *, int *);
+int makeOperator(void);
+
 
 int ppow(int num, int mul);
 int makeIdx(int row, int col);
-
 
 typedef struct __cursor {
   int row;
@@ -229,6 +232,8 @@ int output_process(int shm_id)
 	int row, col;
 
     int i, j;
+
+    int check;
 
     printf("output process %d started\n", getpid());
 
@@ -479,10 +484,104 @@ int output_process(int shm_id)
                 }
                 break;
             case 5:
+
+                //save current data
+                fnd_data[0] = shm_addr[1];
+                fnd_data[1] = shm_addr[2];  
+                fnd_data[2] = shm_addr[3];
+                fnd_data[3] = shm_addr[4];
+
+                retval = write(dev_fnd, &fnd_data, 4);
+                if(retval < 0) {
+                    printf("write error!!\n");
+                    return -1;
+                }
+
+                //when alarm time... 
+                if( shm_addr[121] == 1 && 
+                        fnd_data[0] == shm_addr[117] && 
+                        fnd_data[1] == shm_addr[118] && 
+                        fnd_data[2] == shm_addr[119] && 
+                        fnd_data[3] == shm_addr[120] && 
+                        shm_addr[116] == 0 ) 
+                    {
+                    check = 1;
+                }
+
+                //alarm function
+                if( check == 1) {  //alarm on
+                
+                    if(shm_addr[127] == shm_addr[126]) {//when valid answer inserted
+
+                        shm_addr[116] = 0;
+                        shm_addr[121] = 0;
+                        check = 0; 
+                        buzzData = 2;
+
+                        retval = write(dev_buzzer, &buzzData, 1); 
+
+                        lednum = 0;
+                        write(dev_led, &lednum, 1);
+
+                        memset( ledtext, 0x00, sizeof(ledtext) );
+                        strcpy( ledtext, "ByeBye" );
+
+                    }
+                    else {
+
+                        if(shm_addr[44] % 2 == 0) {
+                            buzzData = 1;
+                            lednum = 240;
+                            write(dev_dot_font, fpga_number[3], sizeof(fpga_number[3]));
+                        }
+                        else {
+                            buzzData = 0;
+                            lednum = 15;
+                            write(dev_dot_font, fpga_number[4], sizeof(fpga_number[4]));
+                        }
+                        //write dot and lcd
+
+                        retval = write(dev_led, &lednum, 1);
+                        lednum=0;
+
+                        shm_addr[122] = 1; //problem solving mode on..
+
+                        //write problem to text lcd
+                        memset( ledtext, 0x00, sizeof(ledtext) );
+                        ledtext[0] = shm_addr[123] + 48;
+                        ledtext[1] = shm_addr[125];
+                        ledtext[2] = shm_addr[124] + 48;
+                        ledtext[3] = 61;
+
+                        if(shm_addr[127] != 1000)
+                            ledtext[4] = shm_addr[127] + 48;
+
+                    }
+                    //write buzzer info
+                    retval = write(dev_buzzer, &buzzData, 1);
+                    if(retval < 0) {
+                        printf("buz write error..\n");
+                        return -1;
+                    }
+
+                    shm_addr[122] = 1; //problem solving mode on..
+                    retval = write(dev_text_lcd, ledtext, MAX_STRING);
+
+                    if(retval < 0) {
+                        printf("TEXT_LCD write error..\n");
+                        return -1;
+                    }
+
+                }
+                else {
+                    //when alarm off, init led and dot
+                    write(dev_dot_font, fpga_number[3], sizeof(fpga_number[3]));
+                    lednum = 0;
+                    write(dev_led, &lednum, 1);
+                }
                 break;
             default:
                 break;
-        
         }
         if(exit_flag){
             break;
@@ -537,6 +636,12 @@ int main_process(int shm_id)
     int buttcount   = 0;
     int premode     = -1;
     int preval      = -1;
+
+    int num1;
+    int num2;
+    int operator;
+    int answer;
+    int input;
 
    	int i; 
 
@@ -915,10 +1020,130 @@ int main_process(int shm_id)
 
 				break;
             case 5:
+   
+                curdot.row = 6;
+                curdot.col = 0;
+                buttcount = 0;
+                pushcount2 = 0;
+                addhour = 0;
+                addmin = 0;
+                shm_addr[44] = tm->tm_sec;					
+                shm_addr[127]=1000;
+                //for time count
+                read(dev_switch, &push_sw_buff, buff_size);
+
+                if(push_sw_buff[0] == 1 && shm_addr[116] == 0) {
+                    shm_addr[116] = 1;
+                    printf("alarm setting mode...\n");
+                    addmin = 0;
+                    addhour = 0;
+                }
+                else if(push_sw_buff[0] == 1 && shm_addr[116] == 1) {
+                    shm_addr[116] = 0;
+                    printf("alarm setting mode finished...\n");
+                }
+
+
+                if(shm_addr[116] == 1) {  //alarm setting mode
+                    ////for led
+
+                    ///for switch
+
+                    //calculate current time
+                    if(push_sw_buff[1] == 1) {
+                        addmin = 0;
+                        add10min = 0;
+                        addhour = 0;
+                        add10hour = 0;
+                    }
+                    else if(push_sw_buff[3] == 1) {
+                        tmphour = (tmphour + 1) % 24;
+                    }
+                    else if(push_sw_buff[4] == 1) {
+                        tmpmin = (tmpmin + 1) % 60;
+                    }
+
+                    add10hour = (tmphour/10);
+                    addhour = (tmphour%10);
+                    add10min = (tmpmin/10);
+                    addmin = (tmpmin%10);
+
+                    shm_addr[1] = add10hour;
+                    shm_addr[2] = addhour;
+                    shm_addr[3] = add10min;
+                    shm_addr[4] = addmin;
+
+
+                    //set time for alarm
+                    if(push_sw_buff[2] == 1 && shm_addr[121] == 0) {
+                        printf("alarm saved... %d%d:%d%d\n",add10hour, addhour, add10min,addmin);
+                        shm_addr[117] = add10hour;
+                        shm_addr[118] = addhour;
+                        shm_addr[119] = add10min;
+                        shm_addr[120] = addmin;
+                        //alarm enable
+                        shm_addr[121] = 1;
+                    }
+                    //when alarm disabled
+                    else if(push_sw_buff[2] == 1 && shm_addr[121] == 1) {
+                        printf("alarm disabled..\n");
+                        shm_addr[121] = 0;
+                    }
+                }
+                else {   //print current time	
+                    tmphour = tm->tm_hour;
+                    tmpmin = tm->tm_min;
+
+                    cur10hour = tmphour/10;
+                    curhour = tmphour%10;
+                    cur10min = tmpmin/10;
+                    curmin = tmpmin%10;
+
+                    shm_addr[1] = cur10hour;
+                    shm_addr[2] = curhour;  
+                    shm_addr[3] = cur10min;
+                    shm_addr[4] = curmin;
+
+                    if(shm_addr[122] == 1) {  //problem solving mode 
+
+                        if(num1 == 0  && num2 == 0) {
+                            //make problem one time
+
+                            makeNumber(&num1, &num2);
+                            operator = makeOperator();
+                            answer = makeAnswer(num1, num2, operator);
+                        }
+                        //save problem to print text lcd
+                        shm_addr[123] = num1;
+                        shm_addr[124] = num2;
+                        shm_addr[125] = operator;
+                        shm_addr[126] = answer;
+
+                        buttcount = 0;
+                        for(i = 0 ; i < 9 ; i++) {
+                            if(push_sw_buff[i] == 1)
+                            buttcount++;
+                        }
+
+                        if(buttcount == 1){
+                            for(i = 0 ; i < 9 ; i++) {
+                            if(push_sw_buff[i] == 1)
+                                input = i + 1;
+                            }
+                            shm_addr[127] = input;
+                        }
+
+                    }
+                    else {
+                        num1 = 0;
+                        num2 = 0;
+                    }
+
+                }
+
 				break;
             default:
 				break;
-
         }
 
 		if( exit_flag ){
@@ -1053,3 +1278,32 @@ int makeIdx(int row, int col){
 	return row * 10 + col + 45;
 }
 
+
+void makeNumber(int *num1, int *num2){
+
+    srand((int)time(NULL));
+    *num1 = rand() % 4 + 1;
+    *num2 = rand() % 4 + 1;
+}
+
+int makeOperator(void){
+
+    int randNum; 
+    srand((int)time(NULL));
+    randNum = rand()%2;
+
+    if( randNum == 0 ){
+        return 43;      // +
+    }
+    else{
+        return 42;      // *
+    }
+    
+}
+
+int makeAnswer(int num1, int num2, int operator) {  //make answer for alarm clock
+  if(operator == 43)
+    return num1+num2;
+  else(operator == 42);
+    return num1 * num2;
+}
