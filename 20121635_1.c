@@ -19,6 +19,7 @@
 #include <math.h>
 
 
+// driver path
 #define FND_DEVICE              "/dev/fpga_fnd"
 #define LED_DEVICE              "/dev/fpga_led"
 #define SWITCH_DEVICE           "/dev/fpga_push_switch"
@@ -61,7 +62,7 @@ void refreshDot(int* shm_addr);
 
 int makeAnswer(int, int, int);
 void makeNumber(int *, int *);
-int makeOperator(void);
+int makeOperator(int, int);
 
 
 int ppow(int num, int mul);
@@ -78,13 +79,18 @@ char charTable [9][3] ={
     {'P','R','S'}, {'T','U','V'}, {'W','X','Y'}
 };
 
-char fpga_number[5][10] ={
+char fpga_number[3][10] ={
     {0x0c,0x1c,0x1c,0x0c,0x0c,0x0c,0x0c,0x0c,0x0c,0x1e},    // 1
     {0x1c,0x36,0x63,0x63,0x63,0x7f,0x7f,0x63,0x63,0x63},    // A
-    {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},	// initialize
-    {0xff,0x41,0x55,0x41,0x5d,0xff,0x14,0x14,0x14,0x14},    // alarm
-    {0xff,0x41,0x55,0x41,0x5d,0xff,0x22,0x22,0x22,0x22}     // alarm    
+    {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}		// initialize
 };
+
+char fpga_number_1[3][10] = {	// for alarm
+	{0x63,0x63,0x63,0x7F,0x7F,0x63,0x63,0x7F,0x60,0x60},
+	{0x1c,0x1c,0x1c,0x00,0x00,0x1c,0x1c,0x00,0x1F,0x1F},
+	{0x08,0x1c,0x1c,0x3E,0x3E,0x7F,0x7F,0x08,0x08,0x1C}
+};
+
 
 int main (int argc, char *argv[])
 {
@@ -129,19 +135,21 @@ int main (int argc, char *argv[])
 
 }
 
+
+/* input_process */
 int input_process(int shm_id)
 {
     struct input_event ev[BUFF_SIZE];
 
     
-    char *device    = "/dev/input/event0";              // READY device
+    char *device    = "/dev/input/event0";              	// READY device
     int *shm_addr   = shmat(shm_id, (char *)NULL, 0);
 
     int fd, rd, value, mode;
     int size = sizeof(struct input_event);
     
     shm_addr[0] = 1;    // mode
-    memset(shm_addr, 0, MEM_SIZE);
+    memset(shm_addr, 0, MEM_SIZE); // init
 
     printf("input process %d started\n", getpid());
 
@@ -169,6 +177,7 @@ int input_process(int shm_id)
 
             if(ev[0].code == 158) {  // BACK button
                 shm_addr[0] = -1;
+				exit(1);
                 break;
             }
             else if(ev[0].code == 115){     // VOL+ button
@@ -176,7 +185,6 @@ int input_process(int shm_id)
                 mode = shm_addr[0];
                 memset(shm_addr, 0x00, MEM_SIZE);
 
-                //printf("before mem value : %d\n", shm_addr[0]);
                 if( mode == 5 )
                     shm_addr[0] = 1;
                 else
@@ -220,6 +228,7 @@ int output_process(int shm_id)
 
     int fd, rd, mode;
     int exit_flag = 0;
+	int back_flag = 0;
 
     int dev_fnd;
     int dev_led;
@@ -244,6 +253,8 @@ int output_process(int shm_id)
     dev_dot_font    = open(FPGA_DOT_DEVICE, 		O_WRONLY);
     dev_text_lcd    = open(FPGA_TEXT_LCD_DEVICE, 	O_WRONLY);
 
+
+	// check driver file open error
     if(dev_fnd < 0) {
         printf("FND Device open Error..\n");
         return -1;
@@ -266,12 +277,14 @@ int output_process(int shm_id)
     }
 
 
+
     while(1){
         exit_flag = 0;
         mode = shm_addr[0];
         switch(mode){
 
 
+			// back_buttion 
             case -1:
 
                 memset( fnd_data,0x00, sizeof(fnd_data) );
@@ -311,7 +324,7 @@ int output_process(int shm_id)
 
                 printf("exit................!!\n");
                 exit_flag = 1;
-				exit(1);
+				back_flag = 1;
 
                 break;
 
@@ -443,7 +456,6 @@ int output_process(int shm_id)
                     printf("LED init error..\n");
                     return -1;
                 }
-
                 retval = write(dev_dot_font, fpga_number[2], sizeof(fpga_number[2]));
 				
                 if(retval < 0) {
@@ -477,12 +489,15 @@ int output_process(int shm_id)
                 fnd_data[1] = shm_addr[2];
                 fnd_data[2] = shm_addr[3];
                 fnd_data[3] = shm_addr[4];
+
                 retval = write(dev_fnd, &fnd_data, 4);
                 if(retval < 0) {
                     printf("FND write error..\n");
                     return -1;
                 }
                 break;
+
+
             case 5:
 
                 //save current data
@@ -532,12 +547,12 @@ int output_process(int shm_id)
                         if(shm_addr[44] % 2 == 0) {
                             buzzData = 1;
                             lednum = 240;
-                            write(dev_dot_font, fpga_number[3], sizeof(fpga_number[3]));
+                            write(dev_dot_font, fpga_number_1[0], sizeof(fpga_number_1[0]));
                         }
                         else {
                             buzzData = 0;
                             lednum = 15;
-                            write(dev_dot_font, fpga_number[4], sizeof(fpga_number[4]));
+                            write(dev_dot_font, fpga_number_1[1], sizeof(fpga_number_1[1]));
                         }
                         //write dot and lcd
 
@@ -575,7 +590,7 @@ int output_process(int shm_id)
                 }
                 else {
                     //when alarm off, init led and dot
-                    write(dev_dot_font, fpga_number[3], sizeof(fpga_number[3]));
+                    write(dev_dot_font, fpga_number_1[2], sizeof(fpga_number_1[2]));
                     lednum = 0;
                     write(dev_led, &lednum, 1);
                 }
@@ -645,6 +660,8 @@ int main_process(int shm_id)
 
    	int i; 
 
+	int status;
+
     shm_addr[0] = 1;
     buff_size = sizeof(push_sw_buff);
 
@@ -665,8 +682,6 @@ int main_process(int shm_id)
 
             case -1:
                 exit_flag = 1;
-				sleep(4);
-				exit(1);
                 break;
 
 
@@ -1110,7 +1125,7 @@ int main_process(int shm_id)
                             //make problem one time
 
                             makeNumber(&num1, &num2);
-                            operator = makeOperator();
+                            operator = makeOperator(num1, num2);
                             answer = makeAnswer(num1, num2, operator);
                         }
                         //save problem to print text lcd
@@ -1153,6 +1168,18 @@ int main_process(int shm_id)
 
     }
 
+
+	wait(&status);
+	wait(&status);
+
+    close(dev_switch);
+
+	shmdt(shm_addr);
+	shmctl(shm_id, IPC_RMID, (struct shmid_ds *)NULL);
+
+	return 0;
+
+
 }
 
 void makeString(int* shm_addr, int curStrnum, char val) {  //write string to shared memory
@@ -1168,7 +1195,7 @@ void makeString(int* shm_addr, int curStrnum, char val) {  //write string to sha
   }
 }
 
-void writeString(int *shm_addr, unsigned char* str) {
+void writeString(int *shm_addr, unsigned char* str) { 	// writeString.
 	int i;
 	memset(str, 0x00, MAX_STRING);
 
@@ -1264,19 +1291,19 @@ int ppow(int num, int mul) {  //same as pow in math.h
   return ret;
 }
 
-int makeIdx(int row, int col){
+int makeIdx(int row, int col){		// make Index
 	return row * 10 + col + 45;
 }
 
 
-void makeNumber(int *num1, int *num2){
+void makeNumber(int *num1, int *num2){ 		// make number
 
     srand((int)time(NULL));
     *num1 = rand() % 4 + 1;
     *num2 = rand() % 4 + 1;
 }
 
-int makeOperator(void){
+int makeOperator(int num1, int num2){		// make operator
 
     int randNum; 
     srand((int)time(NULL));
@@ -1286,7 +1313,10 @@ int makeOperator(void){
         return 43;      // +
     }
     else{
-        return 42;      // *
+		if( num1 * num2 > 10 )
+			return 43;		// +
+		else
+        	return 42;      // *
     }
     
 }
