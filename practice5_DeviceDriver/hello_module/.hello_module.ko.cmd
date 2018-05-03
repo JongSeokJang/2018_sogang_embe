@@ -1,0 +1,1 @@
+cmd_/home/bd/Downloads/5주차/hello_module/hello_module.ko := arm-none-linux-gnueabi-ld -EL -r  -T /work/achroimx_kernel/scripts/module-common.lds --build-id  -o /home/bd/Downloads/5주차/hello_module/hello_module.ko /home/bd/Downloads/5주차/hello_module/hello_module.o /home/bd/Downloads/5주차/hello_module/hello_module.mod.o
