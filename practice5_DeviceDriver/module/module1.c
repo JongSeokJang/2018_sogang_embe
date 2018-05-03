@@ -31,9 +31,7 @@ void mynew_function(struct my_new_function_data *numInfo, int num){
 		num %= 10;
 	}
 
-	dataInfo.length = length;
 	numInfo->length = length;
-
 	
 }
 

@@ -38,7 +38,6 @@ int calldev_init(void){
 		printk(KERN_INFO, "arr[%d] : %d\n", ii, newData.data[ii]);
 	}
 	
-
 	return 0;
 }
 
