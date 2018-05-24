@@ -1,0 +1,10 @@
+sudo apt-get install git gnupg flex bison gperf build-essential
+sudo apt-get install zip curl libc6-dev libncurses5-dev:i386 x11proto-core-dev
+sudo apt-get install libx11-dev:i386 libreadline6-dev:i386
+sudo apt-get install libgl1-mesa-dev g++-multilib mingw-w64 tofrodos u-boot-tools
+sudo apt-get install python-markdown libxml2-utils xsltproc zlib1g-dev:i386
+sudo apt-get install uuid uuid-dev zlib1g-dev liblz4-dev liblzo2-dev
+sudo apt-get install git-core libncurses5-dev libx11-dev
+sudo apt-get install gcc-multilib libc6-i386 libc6-dev-i386
+sudo apt-get install lib32z-dev lib32ncurses5-dev
+sudo apt-get install libstdc++6:i386 lib32z1 lib32ncurses5
