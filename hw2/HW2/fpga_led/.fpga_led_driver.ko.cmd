@@ -1,0 +1,1 @@
+cmd_/home/bd/Downloads/5주차/fpga_led/fpga_led_driver.ko := arm-none-linux-gnueabi-ld -EL -r  -T /work/achroimx_kernel/scripts/module-common.lds --build-id  -o /home/bd/Downloads/5주차/fpga_led/fpga_led_driver.ko /home/bd/Downloads/5주차/fpga_led/fpga_led_driver.o /home/bd/Downloads/5주차/fpga_led/fpga_led_driver.mod.o

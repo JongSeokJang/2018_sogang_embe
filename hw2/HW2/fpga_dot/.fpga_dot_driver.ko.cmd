@@ -1,0 +1,1 @@
+cmd_/work/achroimx6q/fpga_driver/fpga_dot/fpga_dot_driver.ko := arm-none-linux-gnueabi-ld -EL -r  -T /work/achroimx6q/kernel/scripts/module-common.lds --build-id  -o /work/achroimx6q/fpga_driver/fpga_dot/fpga_dot_driver.ko /work/achroimx6q/fpga_driver/fpga_dot/fpga_dot_driver.o /work/achroimx6q/fpga_driver/fpga_dot/fpga_dot_driver.mod.o

@@ -1,0 +1,2 @@
+/home/embe/Downloads/embe_github/2018_sogang_embe/p5/hello_module/hello_module.ko
+/home/embe/Downloads/embe_github/2018_sogang_embe/p5/hello_module/hello_module.o
