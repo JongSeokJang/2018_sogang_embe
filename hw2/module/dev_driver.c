@@ -19,7 +19,6 @@
 #define IOM_FPGA_MAJOR 	242
 #define IOM_FPGA_NAME 	"dev_driver"
 
-
 #define IOM_FPGA_LED_ADDRESS 		0x08000016 	// pysical address
 #define IOM_FPGA_FND_ADDRESS 		0x08000004 	// pysical address
 #define IOM_FPGA_DOT_ADDRESS 		0x08000210 	// pysical address
@@ -39,23 +38,24 @@ ssize_t iom_fpga_write(struct file *inode, const char *gdata, size_t length, lof
 ssize_t iom_fpga_ioctl(struct file *file, unsigned int cmd, unsigned long kernel_param);
 
 //global varibale
-static int count        = 0;
-static int interval 	  = 0;
-static int option 	    = 0;
-static int c_position   = -1;
-static int c_value      = -1;
-static int s_position   = -1;
-static int s_value      = -1;
+static int count      = 0;
+static int interval   = 0;
+static int option 	  = 0;
+static int c_position = -1;
+static int c_value    = -1;
+static int s_position = -1;
+static int s_value    = -1;
 
-static int num_dir = 1;
-static int num_min = -1;
-static int num_max = 0;
+static int num_dir    = 1;
+static int num_min    = -1;
+static int num_max    = 0;
 
-static int name_dir = 1;
-static int name_min = -1;
-static int name_max = 0;
+static int name_dir   = 1;
+static int name_min   = -1;
+static int name_max   = 0;
 
 static int fpga_port_usage = 0;
+
 static unsigned char *iom_fpga_led_addr;
 static unsigned char *iom_fpga_fnd_addr;
 static unsigned char *iom_fpga_dot_addr;
