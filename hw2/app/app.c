@@ -63,31 +63,14 @@ int main(int argc, char **argv)
     }
 
   }
-  /*
-  printf(" before system call ");
-  printf(" [%d][%d][%d]\n", dev_interval, dev_count, dev_option);
-
-  */
   kernel_param = syscall(376, dev_interval, dev_count, dev_option);
   
-  /*
-  printf("systemcall return value : %ld\n", kernel_param);
-
-  printf(" after system call ");
-  printf(" [%d][%d][%d]\n", (kernel_param & 0xff000000) >> 24, 
-                            (kernel_param & 0x00ff0000) >> 16,
-                            (kernel_param & 0x0000ffff) );
-
-  */
-
   device = open(FPGA_DEVICE, O_WRONLY);
   if( device < 0){
     printf(" Device open error : %s\n", FPGA_DEVICE);
     exit(1);
   }
 
-  
-  //printf("write : [%d] \n",write(device, kernel_param, sizeof(kernel_param)));
   ioctl(device, IOCTL_SET_MSG, kernel_param);
 
   close(device);
