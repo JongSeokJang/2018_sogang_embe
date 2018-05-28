@@ -162,7 +162,8 @@ static void text_control(int init)
 
   char num[16]  = "20121635";
   char name[16] = "jang jong seok";
-  memset( value , 0x00, sizeof(value)  ); // name
+  for( ii = 0; ii < 33; ii++)
+    value[ii] = ' ';
 
   // when exit.
   if( init == -1 ){
@@ -208,7 +209,7 @@ static void text_control(int init)
 
   //top 
   for( ii = 0; ii < 16; ii++){
-    if( ii >= num_min && ii <= num_max)
+    if( ii >= num_min && ii < num_max)
       value[ii] = num[ii-num_min];
   }
 
@@ -248,6 +249,13 @@ int iom_fpga_release(struct inode *minode, struct file *mfile)
 
 ssize_t iom_fpga_ioctl(struct file *file, unsigned int cmd, unsigned long kernel_param)
 {
+  num_dir    = 1;
+  num_min    = -1;
+  num_max    = 0;
+
+  name_dir   = 1;
+  name_min   = -1;
+  name_max   = 0;
   
   switch(cmd) {
     case IOCTL_SET_MSG:
@@ -296,6 +304,13 @@ ssize_t iom_fpga_ioctl(struct file *file, unsigned int cmd, unsigned long kernel
 
 ssize_t iom_fpga_write(struct file *inode, const char *gdata, size_t length, loff_t *off_what)
 {
+  num_dir    = 1;
+  num_min    = -1;
+  num_max    = 0;
+
+  name_dir   = 1;
+  name_min   = -1;
+  name_max   = 0;
   // Toto this part
   const char *tmp = gdata;
   long kernel_timer_buff = 0;
