@@ -1,0 +1,1 @@
+cmd_/home/lee/Desktop/HW3/interrupt/interrupt.ko := /opt/toolchains/arm-2009q1/bin/arm-none-linux-gnueabi-ld -EL -r  -T /home/lee/Desktop/kernel/scripts/module-common.lds --build-id -o /home/lee/Desktop/HW3/interrupt/interrupt.ko /home/lee/Desktop/HW3/interrupt/interrupt.o /home/lee/Desktop/HW3/interrupt/interrupt.mod.o
