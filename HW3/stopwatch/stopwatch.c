@@ -23,6 +23,7 @@ static unsigned char *iom_fpga_fnd_addr;
 
 static struct struct_mydata {
   struct timer_list timer;
+  struct timer_list exit_timer;
   int count;
 };
 
@@ -32,7 +33,9 @@ static struct cdev inter_cdev;
 //static int inter_major=0, inter_minor=0;
 
 static int start_flag = 0;
-static int stop_flag = 0;
+static int stop_flag  = 0;
+static int exit_flag  = 0;
+
 static int result;
 //static dev_t inter_dev;
 
@@ -46,8 +49,8 @@ irqreturn_t inter_handler3(int irq, void* dev_id, struct pt_regs* reg);
 irqreturn_t inter_handler4(int irq, void* dev_id, struct pt_regs* reg);
 
 static void kernel_timer_blink(unsigned long timeout);
+static void exit_timer_blink(unsigned long timeout);
 static void fnd_control(void);
-int exitFlag = 1;
 
 wait_queue_head_t wq_write;
 DECLARE_WAIT_QUEUE_HEAD(wq_write);
@@ -71,13 +74,10 @@ irqreturn_t inter_handler1(int irq, void* dev_id, struct pt_regs* reg) {
     add_timer(&mydata.timer);
   }
   // working now
-  else {
+  else if( stop_flag == 1) {
 
-    // stop_flag
-    if( stop_flag == 1 ){
-      stop_flag   = 0;
-      add_timer(&mydata.timer);
-    }
+    stop_flag   = 0;
+    add_timer(&mydata.timer);
   }
   return IRQ_HANDLED;
 }
@@ -100,8 +100,8 @@ irqreturn_t inter_handler2(int irq, void* dev_id, struct pt_regs* reg) {
 irqreturn_t inter_handler3(int irq, void* dev_id,struct pt_regs* reg) {
   printk(KERN_ALERT "interrupt3!!! = %x\n", gpio_get_value(IMX_GPIO_NR(2, 15)));
 
-  stop_flag     = 0;
   start_flag    = 0;
+  stop_flag     = 0;
   mydata.count  = 0;
 
   fnd_control();
@@ -113,27 +113,25 @@ irqreturn_t inter_handler3(int irq, void* dev_id,struct pt_regs* reg) {
 // VOL- Button
 // exit when this button during fressing 3 second
 irqreturn_t inter_handler4(int irq, void* dev_id, struct pt_regs* reg) {
+
+
   printk(KERN_ALERT "interrupt4!!! = %x\n", gpio_get_value(IMX_GPIO_NR(5, 14)));
 
-  del_timer_sync(&mydata.timer);
-  __wake_up(&wq_write, 1, 1, NULL);
+  if( exit_flag == 0 ){
+    exit_flag = 1;
+    mydata.exit_timer.expires = get_jiffies_64() + (HZ*3);
+    mydata.exit_timer.function = exit_timer_blink;
 
-  /*
-  if( gpio_get_value(IMX_GPIO_NR(5, 14)) == 0 ){
-    // when falling interrupt, check 3 second for exit module
-    printk("falling..\n");
-    exitFlag = 1;
+    add_timer(&mydata.exit_timer);
+  }
+  else if( exit_flag == 1 ){
+    exit_flag = 0;
+    del_timer_sync(&mydata.exit_timer);
+  }
 
-  }
-  else{
-    printk("rising..\n");
-    exitFlag = 0;
-    
-  }
-  */
   return IRQ_HANDLED;
-
 }
+
 
 static void kernel_timer_blink(unsigned long timeout) {
 
@@ -147,6 +145,22 @@ static void kernel_timer_blink(unsigned long timeout) {
   mydata.timer.function = kernel_timer_blink;
 
   add_timer(&mydata.timer);
+
+}
+
+static void exit_timer_blink(unsigned long timeout){
+
+  printk("exit_timer_blink1!\n");
+
+  del_timer_sync(&mydata.timer);
+  del_timer_sync(&mydata.exit_timer);
+
+  mydata.count = 0;
+  fnd_control();
+
+  printk("exit_timer_blink2!\n");
+
+  __wake_up(&wq_write,1,1,NULL);
 
 }
 
@@ -200,7 +214,7 @@ static int inter_open(struct inode *minode, struct file *mfile){
   gpio_direction_input(IMX_GPIO_NR(5,14));
   irq = gpio_to_irq(IMX_GPIO_NR(5,14));
   printk(KERN_ALERT "IRQ Number : %d\n",irq);
-  ret=request_irq(irq, inter_handler4, IRQF_TRIGGER_FALLING, "voldown", 0);
+  ret=request_irq(irq, inter_handler4, IRQF_TRIGGER_FALLING|IRQF_TRIGGER_RISING, "voldown", 0);
 
   return 0;
 }
@@ -271,7 +285,6 @@ static int inter_register_cdev(void)
 
 static int __init inter_init(void) {
   int result;
-  //if((result = inter_register_cdev()) < 0 )
     
   result = register_chrdev(DEVICE_MAJOR, DEVICE_NAME, &inter_fops);
  
@@ -282,6 +295,7 @@ static int __init inter_init(void) {
 
   iom_fpga_fnd_addr   = ioremap(IOM_FPGA_FND_ADDRESS,   0x4);
   init_timer(&(mydata.timer));
+  init_timer(&(mydata.exit_timer));
 
 
   printk(KERN_ALERT "Init Module Success \n");
@@ -293,13 +307,9 @@ static int __init inter_init(void) {
 static void __exit inter_exit(void) {
 
   del_timer_sync(&mydata.timer);
+  del_timer_sync(&mydata.exit_timer);
+
   unregister_chrdev(DEVICE_MAJOR, DEVICE_NAME);
-
-  /*
-  cdev_del(&inter_cdev);
-  unregister_chrdev_region(inter_dev, 1);
-  */
-
   iounmap(iom_fpga_fnd_addr);
 
   printk(KERN_ALERT "Remove Module Success \n");
