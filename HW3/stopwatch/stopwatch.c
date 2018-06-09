@@ -150,15 +150,12 @@ static void kernel_timer_blink(unsigned long timeout) {
 
 static void exit_timer_blink(unsigned long timeout){
 
-  printk("exit_timer_blink1!\n");
+  printk("exit_timer_blink!\n");
 
   del_timer_sync(&mydata.timer);
-  //del_timer_sync(&mydata.exit_timer);
 
   mydata.count = 0;
   fnd_control();
-
-  printk("exit_timer_blink2!\n");
 
   __wake_up(&wq_write,1,1,NULL);
 
