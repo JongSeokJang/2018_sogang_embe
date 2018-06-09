@@ -153,7 +153,7 @@ static void exit_timer_blink(unsigned long timeout){
   printk("exit_timer_blink1!\n");
 
   del_timer_sync(&mydata.timer);
-  del_timer_sync(&mydata.exit_timer);
+  //del_timer_sync(&mydata.exit_timer);
 
   mydata.count = 0;
   fnd_control();
